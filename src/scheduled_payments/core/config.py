@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     
     # Default settings
     MONGO_CONNECTION_STRING: str = "mongodb://localhost:27017"
-    MONGO_DATABASE_NAME: str = "sample_analytics"
+    MONGO_DATABASE_NAME: str = "scheduled_payments"
     
     LOG_LEVEL: str = "INFO"
     LOG_FILE: str = "log.txt"

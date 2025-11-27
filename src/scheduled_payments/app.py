@@ -8,7 +8,7 @@ from logging import getLogger, Formatter, StreamHandler
 from logging.handlers import TimedRotatingFileHandler
 from .utils.LoggerColorFormatter import ColorFormatter
 
-from .api.v1.Accounts_blueprint import bp as accounts_bp_v1
+from .api.v1.ScheduledPayments_blueprint import bp as scheduled_payments_bp_v1
 
 ## Logger configuration ##
 logger = getLogger()
@@ -49,7 +49,7 @@ def create_app():
     logger.info("Settings loaded.")
     
     # Load blueprints.
-    app.register_blueprint(accounts_bp_v1)
+    app.register_blueprint(scheduled_payments_bp_v1)
     logger.info("Routes registered")
     
     # Open API Specification
@@ -87,3 +87,5 @@ def create_app():
         logger.info("Service shut down complete.")
     
     return app
+
+app = create_app()

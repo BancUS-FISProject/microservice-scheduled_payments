@@ -1,0 +1,23 @@
+services:
+  scheduled_payments_mongo:
+    image: mongo:7
+    container_name: scheduled_payments_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - scheduled_payments_mongo_data:/data/db
+
+  scheduled_payments:
+    build: .
+    container_name: scheduled_payments
+    depends_on:
+      - scheduled_payments_mongo
+    environment:
+      MONGO_CONNECTION_STRING: "mongodb://scheduled_payments_mongo:27017"
+      MONGO_DATABASE_NAME: "scheduled_payments"
+    ports:
+      - "8000:8000"
+
+volumes:
+  scheduled_payments_mongo_data:
+    name: scheduled_payments_mongo_data
