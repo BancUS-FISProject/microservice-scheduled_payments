@@ -1,0 +1,127 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -o k8s-all-in-one.yaml
+    kompose.version: 1.37.0 (fb0539e64)
+  labels:
+    io.kompose.service: scheduled-payments
+  name: scheduled-payments
+spec:
+  ports:
+    - name: "8000"
+      port: 8000
+      targetPort: 8000
+  selector:
+    io.kompose.service: scheduled-payments
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -o k8s-all-in-one.yaml
+    kompose.version: 1.37.0 (fb0539e64)
+  labels:
+    io.kompose.service: scheduled-payments-mongo
+  name: scheduled-payments-mongo
+spec:
+  ports:
+    - name: "27017"
+      port: 27017
+      targetPort: 27017
+  selector:
+    io.kompose.service: scheduled-payments-mongo
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -o k8s-all-in-one.yaml
+    kompose.version: 1.37.0 (fb0539e64)
+  labels:
+    io.kompose.service: scheduled-payments
+  name: scheduled-payments
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: scheduled-payments
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -o k8s-all-in-one.yaml
+        kompose.version: 1.37.0 (fb0539e64)
+      labels:
+        io.kompose.service: scheduled-payments
+    spec:
+      containers:
+        - env:
+            - name: MONGO_CONNECTION_STRING
+              value: mongodb://scheduled-payments-mongo:27017
+            - name: MONGO_DATABASE_NAME
+              value: scheduled-payments
+          image: scheduled-payments
+          imagePullPolicy: IfNotPresent
+          name: scheduled-payments
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+      restartPolicy: Always
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -o k8s-all-in-one.yaml
+    kompose.version: 1.37.0 (fb0539e64)
+  labels:
+    io.kompose.service: scheduled-payments-mongo
+  name: scheduled-payments-mongo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: scheduled-payments-mongo
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -o k8s-all-in-one.yaml
+        kompose.version: 1.37.0 (fb0539e64)
+      labels:
+        io.kompose.service: scheduled-payments-mongo
+    spec:
+      containers:
+        - image: mongo:7
+          name: scheduled-payments-mongo
+          ports:
+            - containerPort: 27017
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /data/db
+              name: scheduled-payments-mongo-data
+      restartPolicy: Always
+      volumes:
+        - name: scheduled-payments-mongo-data
+          persistentVolumeClaim:
+            claimName: scheduled-payments-mongo-data
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    io.kompose.service: scheduled-payments-mongo-data
+  name: scheduled-payments-mongo-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+
