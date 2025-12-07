@@ -42,7 +42,7 @@ logger.propagate = False
 
 def create_app():
     
-    app = Quart("Python Template")
+    app = Quart("Scheduled Payments Service")
     
     # Load settings
     app.config.from_object(settings)
