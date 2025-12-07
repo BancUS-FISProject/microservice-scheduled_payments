@@ -19,6 +19,9 @@ async def create_scheduled_payments(data: ScheduledPaymentCreate):
     
     service = ScheduledPaymentService()
     new_scheduled_payment = await service.create_new_scheduled_payment(data)
+
+    if not new_scheduled_payment:
+        return {"error": "Ya existe un pago programado con ese id"}, 409
     
     return new_scheduled_payment
 

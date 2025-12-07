@@ -8,6 +8,11 @@ class ScheduledPaymentRepository:
         self.collection = db["scheduled_payments"]
     
     async def insert_scheduled_payment(self, data: ScheduledPaymentCreate) -> ScheduledPaymentView:
+        existing = await self.collection.find_one({"id": data.id})
+        
+        if existing:
+            return None
+        
         scheduled_payment_doc = data.model_dump(by_alias=True)
         
         result = await self.collection.insert_one(scheduled_payment_doc)
