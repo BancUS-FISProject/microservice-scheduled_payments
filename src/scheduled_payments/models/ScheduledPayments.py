@@ -18,7 +18,7 @@ class MonthlySchedule(BaseModel):
     endDate: datetime
 
 class WeeklySchedule(BaseModel):
-    type: Literal["WEEKLY"]
+    frequency: Literal["WEEKLY"]
     daysOfWeek: List[str]
     startDate: datetime
     endDate: datetime

@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     # Default settings
     MONGO_CONNECTION_STRING: str = "mongodb://localhost:27017"
     MONGO_DATABASE_NAME: str = "scheduled_payments"
+    TRANSFER_SERVICE_URL: str = "http://IP_SERVICIO:1234/api/v1/transfers"
     
     LOG_LEVEL: str = "INFO"
     LOG_FILE: str = "log.txt"
