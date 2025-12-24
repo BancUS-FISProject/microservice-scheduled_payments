@@ -12,9 +12,8 @@ services:
     container_name: scheduled_payments
     depends_on:
       - scheduled_payments_mongo
-    environment:
-      MONGO_CONNECTION_STRING: "mongodb://scheduled_payments_mongo:27017"
-      MONGO_DATABASE_NAME: "scheduled_payments"
+    env_file:
+      - .env
     ports:
       - "8000:8000"
 

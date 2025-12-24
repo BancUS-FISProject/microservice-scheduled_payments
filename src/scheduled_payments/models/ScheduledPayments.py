@@ -13,13 +13,15 @@ class Amount(BaseModel):
 
 class MonthlySchedule(BaseModel):
     frequency: Literal["MONTHLY"]
-    startDate: datetime
     dayOfMonth: int
+    startDate: datetime
     endDate: datetime
 
 class WeeklySchedule(BaseModel):
-    type: Literal["WEEKLY"]
+    frequency: Literal["WEEKLY"]
     daysOfWeek: List[str]
+    startDate: datetime
+    endDate: datetime
 
 class OnceSchedule(BaseModel):
     frequency: Literal["ONCE"]
@@ -29,6 +31,8 @@ Schedule = Union[MonthlySchedule, WeeklySchedule, OnceSchedule]
 
 class ScheduledPaymentBase(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    isActive: bool = True
+    lastExecutionAt: Optional[datetime] = None
     accountId: str
     description: str
     beneficiary: Beneficiary

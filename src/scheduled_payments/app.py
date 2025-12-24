@@ -10,6 +10,9 @@ from .utils.LoggerColorFormatter import ColorFormatter
 
 from .api.v1.ScheduledPayments_blueprint import bp as scheduled_payments_bp_v1
 
+import asyncio
+from .services.ScheduledPayments_service import ScheduledPaymentService
+
 ## Logger configuration ##
 logger = getLogger()
 logger.setLevel(settings.LOG_LEVEL)
@@ -37,6 +40,8 @@ logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
 logger.propagate = False
+
+scheduler_task: asyncio.Task | None = None
 
 ## Logger configuration ##
 
@@ -76,6 +81,22 @@ def create_app():
             logger.debug(e)
             raise e
         logger.info("Service started successfully")
+
+        global scheduler_task
+        service = ScheduledPaymentService()
+
+        async def scheduler_loop():
+            logger.info("Scheduler loop started (process_due_payments every 60s)")
+            while True:
+                try:
+                    await service.process_due_payments()
+                except Exception as e:
+                    logger.error("Scheduler loop error")
+                    logger.debug(e)
+                interval = settings.SCHEDULER_INTERVAL_SECONDS
+                await asyncio.sleep(interval)
+
+        scheduler_task = asyncio.create_task(scheduler_loop())
     
     # Release all resources before shutting down
     @app.after_serving
@@ -83,6 +104,14 @@ def create_app():
         logger.info("Service is shutting down...")
         
         ext.close_db_client()
+
+        global scheduler_task
+        if scheduler_task:
+            scheduler_task.cancel()
+            try:
+                await scheduler_task
+            except asyncio.CancelledError:
+                pass
         
         logger.info("Service shut down complete.")
     
