@@ -93,7 +93,8 @@ def create_app():
                 except Exception as e:
                     logger.error("Scheduler loop error")
                     logger.debug(e)
-                await asyncio.sleep(60)
+                interval = settings.SCHEDULER_INTERVAL_SECONDS
+                await asyncio.sleep(interval)
 
         scheduler_task = asyncio.create_task(scheduler_loop())
     
