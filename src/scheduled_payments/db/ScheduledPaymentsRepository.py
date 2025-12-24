@@ -1,5 +1,5 @@
 from ..models.ScheduledPayments import ScheduledPaymentCreate, ScheduledPaymentUpdate, ScheduledPaymentView, OnceSchedule, WeeklySchedule, MonthlySchedule
-from datetime import datetime
+from datetime import datetime, timezone
 
 class ScheduledPaymentRepository:
     """
@@ -65,32 +65,41 @@ class ScheduledPaymentRepository:
 
     def _should_execute(self, payment: ScheduledPaymentView, now: datetime) -> bool:
         sched = payment.schedule
+        now = self._to_utc_aware(now)
         today = now.date()
 
         # ONCE
         if isinstance(sched, OnceSchedule):
             if payment.lastExecutionAt is not None:
                 return False
-            
-            return sched.executionDate <= now
+            exec_dt = self._to_utc_aware(sched.executionDate)
+            return exec_dt <= now
 
         # MONTHLY
         if isinstance(sched, MonthlySchedule):
-            if now < sched.startDate or now > sched.endDate:
+            start = self._to_utc_aware(sched.startDate)
+            end = self._to_utc_aware(sched.endDate)
+            if now < start or now > end:
                 return False
 
-            if payment.lastExecutionAt and payment.lastExecutionAt.date() == today:
-                return False
+            if payment.lastExecutionAt:
+                last = self._to_utc_aware(payment.lastExecutionAt)
+                if last.date() == today:
+                    return False
 
             return now.day == sched.dayOfMonth
 
         # WEEKLY
         if isinstance(sched, WeeklySchedule):
-            if now < sched.startDate or now > sched.endDate:
+            start = self._to_utc_aware(sched.startDate)
+            end = self._to_utc_aware(sched.endDate)
+            if now < start or now > end:
                 return False
 
-            if payment.lastExecutionAt and payment.lastExecutionAt.date() == today:
-                return False
+            if payment.lastExecutionAt:
+                last = self._to_utc_aware(payment.lastExecutionAt)
+                if last.date() == today:
+                    return False
 
             weekday_name = now.strftime("%A").upper()
             days = [d.upper() for d in sched.daysOfWeek]
@@ -108,3 +117,8 @@ class ScheduledPaymentRepository:
             {"id": scheduled_payment_id},
             {"$set": update},
         )
+
+    def _to_utc_aware(self, dt: datetime) -> datetime:
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
