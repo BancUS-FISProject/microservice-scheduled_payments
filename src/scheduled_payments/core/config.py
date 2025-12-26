@@ -24,4 +24,9 @@ class Settings(BaseSettings):
         case_sensitive=False
     )
 
+    # NTP
+    NTP_SERVER: str = "pool.ntp.org"
+    NTP_REFRESH_SECONDS: int = 60
+    NTP_TIMEOUT_SECONDS: int = 3
+
 settings = Settings()

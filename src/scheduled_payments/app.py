@@ -82,6 +82,16 @@ def create_app():
             raise e
         logger.info("Service started successfully")
 
+        # NTP service
+        try:
+            await ext.init_ntp_clock()
+            
+        except Exception as e:
+            logger.error("NTP service failed. Shutting down...")
+            logger.debug(e)
+            raise e
+        logger.info("NTP service started successfully")
+
         global scheduler_task
         service = ScheduledPaymentService()
 
@@ -104,6 +114,7 @@ def create_app():
         logger.info("Service is shutting down...")
         
         ext.close_db_client()
+        ext.stop_ntp_clock()
 
         global scheduler_task
         if scheduler_task:
