@@ -64,3 +64,9 @@ async def delete_scheduled_payment(scheduled_payment_id: str):
         return {"error": "Pago programado no encontrado"}, 404
     
     return "", 204
+
+@bp.get("/health")
+@tag(["v1"])
+async def health_check():
+
+    return {"status": "ok", "service": "scheduled-payments"}, 200
