@@ -16,6 +16,11 @@ services:
       - .env
     ports:
       - "8000:8000"
+    healthcheck:
+      test: CMD-SHELL curl -f "$HEALTHCHECK_URL"
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
 volumes:
   scheduled_payments_mongo_data:
