@@ -1,6 +1,7 @@
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 from .config import settings
+from .ntp_clock import NtpClock
 
 from logging import getLogger
 
@@ -9,6 +10,8 @@ logger.setLevel(settings.LOG_LEVEL)
 
 db_client: AsyncIOMotorClient | None = None
 db: AsyncIOMotorDatabase | None = None
+
+ntp_clock: NtpClock | None = None
 
 async def init_db_client():
     global db_client, db
@@ -39,3 +42,22 @@ def close_db_client():
     except Exception as e:
         logger.error("Error closing database")
         logger.debug(e)
+
+async def init_ntp_clock():
+    global ntp_clock
+    if ntp_clock is not None:
+        return
+    ntp_clock = NtpClock(
+        server=settings.NTP_SERVER,
+        refresh_seconds=settings.NTP_REFRESH_SECONDS,
+        timeout=settings.NTP_TIMEOUT_SECONDS,
+    )
+    logger.info("NTP clock listo (server=%s offset=%.6fs)",
+                settings.NTP_SERVER, ntp_clock.offset_seconds())
+
+def stop_ntp_clock():
+    global ntp_clock
+    if ntp_clock is None:
+        return
+    ntp_clock.stop()
+    ntp_clock = None
