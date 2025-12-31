@@ -62,6 +62,16 @@ class ScheduledPaymentRepository:
                 results.append(payment)
 
         return results
+    
+    async def find_payments_by_account_id(self, account_id: str) -> list[ScheduledPaymentView]:
+        cursor = self.collection.find({"accountId": account_id})
+        results: list[ScheduledPaymentView] = []
+
+        async for doc in cursor:
+            results.append(ScheduledPaymentView.model_validate(doc))
+
+        return results
+
 
     def _should_execute(self, payment: ScheduledPaymentView, now: datetime) -> bool:
         sched = payment.schedule
