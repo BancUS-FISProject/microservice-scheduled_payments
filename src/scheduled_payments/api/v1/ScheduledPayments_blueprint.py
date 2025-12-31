@@ -2,14 +2,14 @@ from quart import Blueprint
 from quart_schema import validate_request, validate_response, tag
 from ...models.ScheduledPayments import ScheduledPaymentCreate, ScheduledPaymentUpdate, ScheduledPaymentView
 from ...services.ScheduledPayments_service import ScheduledPaymentService
-
 from logging import getLogger
+from typing import List
 from ...core.config import settings
 
 logger = getLogger(__name__)
 logger.setLevel(settings.LOG_LEVEL)
 
-bp = Blueprint("scheduled_payments_v1", __name__, url_prefix="/api/v1/scheduled-payments")
+bp = Blueprint("scheduled_payments_v1", __name__, url_prefix="/v1/scheduled-payments")
 
 @bp.post("/")
 @validate_request(ScheduledPaymentCreate)
@@ -64,6 +64,14 @@ async def delete_scheduled_payment(scheduled_payment_id: str):
         return {"error": "Pago programado no encontrado"}, 404
     
     return "", 204
+
+@bp.get("/accounts/<string:account_id>")
+@validate_response(List[ScheduledPaymentView])
+@tag(["v1"])
+async def get_scheduled_payments_by_account(account_id: str):
+    service = ScheduledPaymentService()
+    payments = await service.get_scheduled_payments_by_account_id(account_id)
+    return payments
 
 @bp.get("/health")
 @tag(["v1"])

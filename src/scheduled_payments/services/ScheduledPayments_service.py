@@ -28,6 +28,9 @@ class ScheduledPaymentService:
     async def delete_scheduled_payment(self, scheduled_payment_id: str) -> bool:
         return await self.repo.delete_scheduled_payment(scheduled_payment_id)
     
+    async def get_scheduled_payments_by_account_id(self, account_id: str) -> list[ScheduledPaymentView]:
+        return await self.repo.find_payments_by_account_id(account_id)
+    
     async def process_due_payments(self) -> None:
         now = ext.ntp_clock.now_utc() if ext.ntp_clock else datetime.now(timezone.utc)
 
