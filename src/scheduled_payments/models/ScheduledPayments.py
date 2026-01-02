@@ -52,3 +52,6 @@ class ScheduledPaymentUpdate(BaseModel):
 
 class ScheduledPaymentView(ScheduledPaymentBase):
     pass
+
+class ScheduledPaymentUpcomingView(ScheduledPaymentView):
+    nextExecutionAt: datetime

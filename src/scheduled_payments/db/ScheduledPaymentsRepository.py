@@ -1,5 +1,5 @@
-from ..models.ScheduledPayments import ScheduledPaymentCreate, ScheduledPaymentUpdate, ScheduledPaymentView, OnceSchedule, WeeklySchedule, MonthlySchedule
-from datetime import datetime, timezone
+from ..models.ScheduledPayments import ScheduledPaymentCreate, ScheduledPaymentUpdate, ScheduledPaymentView, OnceSchedule, WeeklySchedule, MonthlySchedule, ScheduledPaymentUpcomingView
+from datetime import datetime, timezone, timedelta
 
 class ScheduledPaymentRepository:
     """
@@ -71,6 +71,33 @@ class ScheduledPaymentRepository:
             results.append(ScheduledPaymentView.model_validate(doc))
 
         return results
+    
+    async def find_upcoming_payments_for_account(
+        self,
+        account_id: str,
+        now: datetime,
+        limit: int
+    ) -> list[ScheduledPaymentUpcomingView]:
+
+        now = self._to_utc_aware(now)
+
+        cursor = self.collection.find({"isActive": True, "accountId": account_id})
+
+        upcoming: list[ScheduledPaymentUpcomingView] = []
+
+        async for doc in cursor:
+            payment = ScheduledPaymentView.model_validate(doc)
+            next_dt = self._next_execution(payment, now)
+            if next_dt is None:
+                continue
+
+            upcoming.append(
+                ScheduledPaymentUpcomingView(**payment.model_dump(), nextExecutionAt=next_dt)
+            )
+
+        upcoming.sort(key=lambda p: p.nextExecutionAt)
+        return upcoming[:limit]
+
 
 
     def _should_execute(self, payment: ScheduledPaymentView, now: datetime) -> bool:
@@ -132,3 +159,85 @@ class ScheduledPaymentRepository:
         if dt.tzinfo is None:
             return dt.replace(tzinfo=timezone.utc)
         return dt.astimezone(timezone.utc)
+    
+    def _next_execution(self, payment: ScheduledPaymentView, now: datetime) -> datetime | None:
+        sched = payment.schedule
+        now = self._to_utc_aware(now)
+
+        last_exec = self._to_utc_aware(payment.lastExecutionAt) if payment.lastExecutionAt else None
+
+        # ONCE
+        if isinstance(sched, OnceSchedule):
+            if payment.lastExecutionAt is not None:
+                return None
+            exec_dt = self._to_utc_aware(sched.executionDate)
+            return exec_dt if exec_dt >= now else None
+
+        # MONTHLY
+        if isinstance(sched, MonthlySchedule):
+            start = self._to_utc_aware(sched.startDate)
+            end = self._to_utc_aware(sched.endDate)
+            if now < start:
+                base = start
+            else:
+                base = now
+
+            for month_jump in range(0, 3): 
+                year = base.year
+                month = base.month + month_jump
+                while month > 12:
+                    month -= 12
+                    year += 1
+
+                day = sched.dayOfMonth
+                try:
+                    candidate = datetime(year, month, day, tzinfo=timezone.utc)
+                except ValueError:
+                    continue
+
+                if candidate < start or candidate > end:
+                    continue
+                if candidate < now:
+                    continue
+                if last_exec and last_exec.date() == candidate.date():
+                    continue
+
+                return candidate
+
+            return None
+
+        # WEEKLY
+        if isinstance(sched, WeeklySchedule):
+            start = self._to_utc_aware(sched.startDate)
+            end = self._to_utc_aware(sched.endDate)
+            if now > end:
+                return None
+
+            base = max(now, start)
+
+            days = [d.upper() for d in sched.daysOfWeek]
+            if not days:
+                return None
+
+            for i in range(0, 14):
+                candidate = (base + timedelta(days=i)).replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                )
+                if candidate > end:
+                    break
+
+                weekday_name = candidate.strftime("%A").upper()
+                if weekday_name not in days:
+                    continue
+
+                if candidate < now:
+                    continue
+
+                if last_exec and last_exec.date() == candidate.date():
+                    continue
+
+                return candidate
+
+            return None
+
+        return None

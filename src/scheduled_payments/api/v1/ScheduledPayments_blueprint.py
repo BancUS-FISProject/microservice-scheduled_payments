@@ -1,10 +1,12 @@
-from quart import Blueprint
+from quart import Blueprint, request
 from quart_schema import validate_request, validate_response, tag
-from ...models.ScheduledPayments import ScheduledPaymentCreate, ScheduledPaymentUpdate, ScheduledPaymentView
+from ...models.ScheduledPayments import ScheduledPaymentCreate, ScheduledPaymentUpdate, ScheduledPaymentView, ScheduledPaymentUpcomingView
 from ...services.ScheduledPayments_service import ScheduledPaymentService
 from logging import getLogger
 from typing import List
 from ...core.config import settings
+from datetime import datetime, timezone
+from ...core import extensions as ext
 
 logger = getLogger(__name__)
 logger.setLevel(settings.LOG_LEVEL)
@@ -78,3 +80,24 @@ async def get_scheduled_payments_by_account(account_id: str):
 async def health_check():
 
     return {"status": "ok", "service": "scheduled-payments"}, 200
+
+@bp.get("/accounts/<string:account_id>/upcoming")
+@validate_response(list[ScheduledPaymentUpcomingView])
+@tag(["v1"])
+async def get_upcoming_payments(account_id: str):
+    service = ScheduledPaymentService()
+
+    limit_raw = request.args.get("limit", "10")
+    try:
+        limit = int(limit_raw)
+    except ValueError:
+        return {"error": "limit debe ser un entero"}, 400
+
+    if limit < 1 or limit > 100:
+        return {"error": "limit debe estar entre 1 y 100"}, 400
+
+    now = ext.ntp_clock.now_utc() if ext.ntp_clock else datetime.now(timezone.utc)
+
+    upcoming = await service.get_upcoming_payments_for_account(account_id, now, limit)
+
+    return upcoming

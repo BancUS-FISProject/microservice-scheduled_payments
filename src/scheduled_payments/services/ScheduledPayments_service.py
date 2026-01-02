@@ -1,4 +1,4 @@
-from ..models.ScheduledPayments import ScheduledPaymentCreate, ScheduledPaymentUpdate, ScheduledPaymentView
+from ..models.ScheduledPayments import ScheduledPaymentCreate, ScheduledPaymentUpdate, ScheduledPaymentView, ScheduledPaymentUpcomingView
 from ..db.ScheduledPaymentsRepository import ScheduledPaymentRepository
 from ..core import extensions as ext
 from datetime import datetime, timezone
@@ -56,3 +56,11 @@ class ScheduledPaymentService:
                     logger.error(
                         f"Transfer service error for payment {p.id}: {resp.status_code} {resp.text}"
                     )
+
+    async def get_upcoming_payments_for_account(
+        self,
+        account_id: str,
+        now: datetime,
+        limit: int
+    ) -> list[ScheduledPaymentUpcomingView]:
+        return await self.repo.find_upcoming_payments_for_account(account_id, now, limit)
