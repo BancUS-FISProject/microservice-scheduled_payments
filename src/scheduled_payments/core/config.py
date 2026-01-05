@@ -9,6 +9,12 @@ class Settings(BaseSettings):
 
     # External services
     TRANSFER_SERVICE_URL: str
+    ACCOUNTS_SERVICE_URL: str
+
+    # Subscription limit
+    SUBSCRIPTION_BASIC: int
+    SUBSCRIPTION_STUDENT: int
+    SUBSCRIPTION_PRO: int
 
     # Scheduler
     SCHEDULER_INTERVAL_SECONDS: int = 60

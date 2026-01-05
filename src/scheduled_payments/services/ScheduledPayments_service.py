@@ -9,13 +9,45 @@ from ..models.ScheduledPayments import OnceSchedule
 
 logger = getLogger(__name__)
 logger.setLevel(settings.LOG_LEVEL)
+
+class AccountNotFoundError(Exception):
+    pass
+
+class SubscriptionLimitReachedError(Exception):
+    def __init__(self, subscription: str, limit: int):
+        self.subscription = subscription
+        self.limit = limit
+        super().__init__(f"Límite alcanzado para plan {subscription}: {limit}")
 class ScheduledPaymentService:
     def __init__(self, repository: ScheduledPaymentRepository | None = None):
         self.repo = repository or ScheduledPaymentRepository(ext.db)
     
     async def create_new_scheduled_payment(self, data: ScheduledPaymentCreate) -> ScheduledPaymentView:
-  
+
+        subscription = await self._get_account_subscription(data.accountId)
+
+        limit = 1
+        current_active = None
+
+        match subscription:
+            case "basico":
+                limit = settings.SUBSCRIPTION_BASIC
+            case "estudiante":
+                limit = settings.SUBSCRIPTION_STUDENT
+            case "pro":
+                limit = settings.SUBSCRIPTION_PRO
+            case _:
+                limit = settings.SUBSCRIPTION_BASIC
+
+        if limit and limit > 0:
+            current_active = await self.repo.count_active_payments_by_account_id(data.accountId)
+            if current_active >= limit:
+                raise SubscriptionLimitReachedError(subscription, limit)  
+            
         new_scheduled_payment_doc = await self.repo.insert_scheduled_payment(data)
+
+        logger.info("Validando límite de suscripción (accountId=%s subscription=%s)", data.accountId, subscription)
+        logger.debug("Pagos activos actuales=%s límite=%s", current_active, limit)
         
         return new_scheduled_payment_doc
     
@@ -64,3 +96,22 @@ class ScheduledPaymentService:
         limit: int
     ) -> list[ScheduledPaymentUpcomingView]:
         return await self.repo.find_upcoming_payments_for_account(account_id, now, limit)
+
+    async def _get_account_subscription(self, account_id: str) -> str:
+        url = settings.ACCOUNTS_SERVICE_URL.replace("{iban}", account_id)
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(url)
+
+        if resp.status_code == 404:
+            raise AccountNotFoundError()
+
+        if not resp.ok:
+            raise RuntimeError(f"Accounts service error: {resp.status_code} {resp.text}")
+
+        data = resp.json()
+        sub = (data.get("subscription") or "").lower()
+
+        if sub not in ["basico", "estudiante", "pro"]:
+            sub = "basico"
+
+        return sub

@@ -1,7 +1,7 @@
 from quart import Blueprint, request
 from quart_schema import validate_request, validate_response, tag
 from ...models.ScheduledPayments import ScheduledPaymentCreate, ScheduledPaymentUpdate, ScheduledPaymentView, ScheduledPaymentUpcomingView
-from ...services.ScheduledPayments_service import ScheduledPaymentService
+from ...services.ScheduledPayments_service import ScheduledPaymentService, AccountNotFoundError, SubscriptionLimitReachedError
 from logging import getLogger
 from typing import List
 from ...core.config import settings
@@ -20,7 +20,17 @@ bp = Blueprint("scheduled_payments_v1", __name__, url_prefix="/v1/scheduled-paym
 async def create_scheduled_payments(data: ScheduledPaymentCreate):
     
     service = ScheduledPaymentService()
-    new_scheduled_payment = await service.create_new_scheduled_payment(data)
+
+    try:
+        new_scheduled_payment = await service.create_new_scheduled_payment(data)
+    except AccountNotFoundError:
+        return {"error": "La cuenta no existe"}, 404
+    except SubscriptionLimitReachedError as e:
+        return {"error": f"Límite de pagos programados alcanzado para el plan {e.subscription} (máximo {e.limit})."}, 403
+    except Exception as e:
+        logger.error("Error creando pago programado")
+        logger.debug(e, exc_info=True)
+        return {"error": "No se pudo crear el pago programado"}, 503
 
     if not new_scheduled_payment:
         return {"error": "Ya existe un pago programado con ese id"}, 409
