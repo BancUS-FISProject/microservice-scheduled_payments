@@ -241,3 +241,6 @@ class ScheduledPaymentRepository:
             return None
 
         return None
+
+    async def count_active_payments_by_account_id(self, account_id: str) -> int:
+        return await self.collection.count_documents({"accountId": account_id, "isActive": True})
