@@ -6,6 +6,7 @@ import httpx
 from logging import getLogger
 from ..core.config import settings
 from ..models.ScheduledPayments import OnceSchedule
+from urllib.parse import quote
 
 logger = getLogger(__name__)
 logger.setLevel(settings.LOG_LEVEL)
@@ -98,14 +99,19 @@ class ScheduledPaymentService:
         return await self.repo.find_upcoming_payments_for_account(account_id, now, limit)
 
     async def _get_account_subscription(self, account_id: str) -> str:
-        url = settings.ACCOUNTS_SERVICE_URL.replace("{iban}", account_id)
+        url = settings.ACCOUNTS_SERVICE_URL.replace("{iban}", quote(account_id, safe=""))
         async with httpx.AsyncClient(timeout=5.0) as client:
             resp = await client.get(url)
 
         if resp.status_code == 404:
+            logger.warning("Accounts service: cuenta no encontrada (account_id=%s)", account_id)
             raise AccountNotFoundError()
 
-        if not resp.ok:
+        if resp.status_code >= 400:
+            logger.error(
+            f"Accounts service error (account_id={account_id} url={url}): "
+            f"{resp.status_code} {resp.text}"
+        )
             raise RuntimeError(f"Accounts service error: {resp.status_code} {resp.text}")
 
         data = resp.json()

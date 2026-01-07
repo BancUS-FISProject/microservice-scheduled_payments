@@ -35,4 +35,13 @@ class Settings(BaseSettings):
     NTP_REFRESH_SECONDS: int = 60
     NTP_TIMEOUT_SECONDS: int = 3
 
+    # Rate limit
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_WINDOW_SECONDS: int = 60
+    RATE_LIMIT_DEFAULT_PER_WINDOW: int = 120
+    RATE_LIMIT_CREATE_PER_WINDOW: int = 5
+    RATE_LIMIT_LIST_PER_WINDOW: int = 60
+    RATE_LIMIT_UPCOMING_PER_WINDOW: int = 30
+    RATE_LIMIT_DELETE_PER_WINDOW: int = 20
+
 settings = Settings()

@@ -28,8 +28,7 @@ async def create_scheduled_payments(data: ScheduledPaymentCreate):
     except SubscriptionLimitReachedError as e:
         return {"error": f"Límite de pagos programados alcanzado para el plan {e.subscription} (máximo {e.limit})."}, 403
     except Exception as e:
-        logger.error("Error creando pago programado")
-        logger.debug(e, exc_info=True)
+        logger.exception("Error creando pago programado")
         return {"error": "No se pudo crear el pago programado"}, 503
 
     if not new_scheduled_payment:

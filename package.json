@@ -1,0 +1,12 @@
+{
+  "name": "scheduled-payments-backend-tests",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "scripts": {
+    "test:inprocess": "NODE_OPTIONS=--experimental-vm-modules JEST_TARGET=inprocess jest --runInBand",
+    "test:outprocess": "NODE_OPTIONS=--experimental-vm-modules JEST_TARGET=outprocess jest --runInBand"
+  }
+}

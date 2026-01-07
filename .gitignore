@@ -4,3 +4,7 @@
 __pycache__/
 *.log.*
 *.log
+node_modules/
+scripts/
+log.txt
+notas
