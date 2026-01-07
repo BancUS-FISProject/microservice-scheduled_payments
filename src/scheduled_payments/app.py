@@ -1,4 +1,6 @@
 from quart import Quart
+from quart import request, jsonify
+from .core.rate_limiter import InMemoryFixedWindowRateLimiter
 from quart_schema import QuartSchema, Tag
 
 from .core.config import settings
@@ -42,6 +44,7 @@ logger.addHandler(console_handler)
 logger.propagate = False
 
 scheduler_task: asyncio.Task | None = None
+rate_limiter: InMemoryFixedWindowRateLimiter | None = None
 
 ## Logger configuration ##
 
@@ -92,6 +95,15 @@ def create_app():
             raise e
         logger.info("NTP service started successfully")
 
+        # Rate limiter
+        global rate_limiter
+        if settings.RATE_LIMIT_ENABLED:
+            rate_limiter = InMemoryFixedWindowRateLimiter(settings.RATE_LIMIT_WINDOW_SECONDS)
+            logger.info(
+                "Rate limit enabled (window=%ss)",
+                settings.RATE_LIMIT_WINDOW_SECONDS
+            )
+
         global scheduler_task
         service = ScheduledPaymentService()
 
@@ -124,8 +136,78 @@ def create_app():
             except asyncio.CancelledError:
                 pass
         
+        global rate_limiter
+        rate_limiter = None
+        
         logger.info("Service shut down complete.")
-    
+
+    @app.before_request
+    async def apply_rate_limit():
+
+        if not settings.RATE_LIMIT_ENABLED or rate_limiter is None:
+            return
+
+        path = request.path or ""
+        method = (request.method or "GET").upper()
+
+        limit = settings.RATE_LIMIT_DEFAULT_PER_WINDOW
+        key_scope = "ip"  # ip o account
+
+        if method == "POST" and path == "/v1/scheduled-payments/":
+            limit = settings.RATE_LIMIT_CREATE_PER_WINDOW
+            key_scope = "account"
+
+        elif method == "GET" and path.startswith("/v1/scheduled-payments/accounts/") and "/upcoming" not in path:
+            limit = settings.RATE_LIMIT_LIST_PER_WINDOW
+            key_scope = "account"
+
+        elif method == "GET" and path.endswith("/upcoming") and path.startswith("/v1/scheduled-payments/accounts/"):
+            limit = settings.RATE_LIMIT_UPCOMING_PER_WINDOW
+            key_scope = "account"
+
+        elif method == "DELETE" and path.startswith("/v1/scheduled-payments/"):
+            limit = settings.RATE_LIMIT_DELETE_PER_WINDOW
+            key_scope = "ip"
+
+        account_id: str | None = None
+
+        if key_scope == "account":
+            if path.startswith("/v1/scheduled-payments/accounts/"):
+                parts = path.split("/")
+                if len(parts) >= 5:
+                    account_id = parts[4] or None
+
+            if account_id is None and method == "POST" and path == "/v1/scheduled-payments/":
+                try:
+                    body = await request.get_json(force=False, silent=True) or {}
+                    account_id = body.get("accountId")
+                except Exception:
+                    account_id = None
+
+        ip = request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+        if not ip:
+            ip = request.remote_addr or "unknown"
+
+        if key_scope == "account":
+            key = f"acct:{account_id or 'unknown'}:{path}:{method}"
+        else:
+            key = f"ip:{ip}:{path}:{method}"
+
+        result = await rate_limiter.allow(key=key, limit=limit)
+
+        headers = {
+            "X-RateLimit-Limit": str(result.limit),
+            "X-RateLimit-Remaining": str(result.remaining),
+            "X-RateLimit-Reset": str(result.reset_in_seconds),
+        }
+
+        if not result.allowed:
+            headers["Retry-After"] = str(result.reset_in_seconds)
+            return jsonify({
+                "error": "Rate limit excedido",
+                "detail": f"Espera {result.reset_in_seconds}s y vuelve a intentarlo."
+            }), 429, headers
+        
     return app
 
 app = create_app()
