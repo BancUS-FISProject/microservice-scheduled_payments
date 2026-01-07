@@ -1,0 +1,51 @@
+services:
+  mongodb-scheduler_test_out_process:
+    image: mongo:7
+    container_name: mongodb-scheduler_test_out_process
+    ports:
+      - "27017:27017"
+
+  accounts-service_test_out_process:
+    image: node:20-alpine
+    container_name: accounts-service_test_out_process
+    working_dir: /app
+    volumes:
+      - ./tests/mocks/accounts-service:/app
+    command: ["node", "server.js"]
+    ports:
+      - "8001:8000"
+
+  transfers-service_test_out_process:
+    image: node:20-alpine
+    container_name: transfers-service_test_out_process
+    working_dir: /app
+    volumes:
+      - ./tests/mocks/transfers-service:/app
+    command: ["node", "server.js"]
+    ports:
+      - "8002:8000"
+
+  scheduled-payments_test_out_process:
+    build: .
+    container_name: scheduled-payments_test_out_process
+    depends_on:
+      - mongodb-scheduler_test_out_process
+      - accounts-service_test_out_process
+      - transfers-service_test_out_process
+    environment:
+      MONGO_CONNECTION_STRING: mongodb://mongodb-scheduler_test_out_process:27017
+      MONGO_DATABASE_NAME: scheduled_payments
+      TRANSFER_SERVICE_URL: http://transfers-service_test_out_process:8000/v1/transactions
+      ACCOUNTS_SERVICE_URL: http://accounts-service_test_out_process:8000/v1/account/{iban}
+      SUBSCRIPTION_BASIC: "1"
+      SUBSCRIPTION_STUDENT: "10"
+      SUBSCRIPTION_PRO: "-1"
+      SCHEDULER_INTERVAL_SECONDS: "60"
+      LOG_LEVEL: "INFO"
+      LOG_FILE: "log.txt"
+      LOG_BACKUP_COUNT: "7"
+      NTP_SERVER: pool.ntp.org
+      NTP_REFRESH_SECONDS: "60"
+      NTP_TIMEOUT_SECONDS: "3"
+    ports:
+      - "8000:8000"

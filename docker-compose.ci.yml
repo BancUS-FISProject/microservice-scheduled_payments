@@ -1,0 +1,26 @@
+services:
+  scheduled_payments_mongo_test_in_process:
+    image: mongo:7
+    container_name: scheduled_payments_mongo_test_in_process
+    ports:
+      - "27017:27017"
+
+  accounts-service_test_in_process:
+    image: node:20-alpine
+    container_name: accounts-service_test_in_process
+    working_dir: /app
+    volumes:
+      - ./tests/mocks/accounts-service:/app
+    command: ["node", "server.js"]
+    ports:
+      - "8001:8000"
+
+  transfers-service_test_in_process:
+    image: node:20-alpine
+    container_name: transfers-service_test_in_process
+    working_dir: /app
+    volumes:
+      - ./tests/mocks/transfers-service:/app
+    command: ["node", "server.js"]
+    ports:
+      - "8002:8000"
