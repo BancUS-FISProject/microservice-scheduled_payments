@@ -57,14 +57,20 @@ test("POST crea pago para cuenta basico (1 permitido) y el 2º da 403", async ()
 
   const r1 = await fetch(`${BASE}/`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer test-token"
+    },
     body: JSON.stringify(payload)
   })
   expect([200, 201]).toContain(r1.status)
 
   const r2 = await fetch(`${BASE}/`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer test-token"
+    },
     body: JSON.stringify({ ...payload, id: crypto.randomUUID(), description: "Pago prueba 2" })
   })
 
@@ -84,7 +90,10 @@ test("POST con cuenta inexistente -> 404", async () => {
 
   const res = await fetch(`${BASE}/`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer test-token"
+    },
     body: JSON.stringify(payload)
   })
 
