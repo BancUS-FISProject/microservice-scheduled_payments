@@ -33,7 +33,7 @@ class ScheduledPaymentService:
         match subscription:
             case "basico":
                 limit = settings.SUBSCRIPTION_BASIC
-            case "estudiante":
+            case "premium":
                 limit = settings.SUBSCRIPTION_STUDENT
             case "pro":
                 limit = settings.SUBSCRIPTION_PRO
@@ -80,9 +80,13 @@ class ScheduledPaymentService:
                     "currency": p.amount.currency
                 }
 
-                resp = await client.post(settings.TRANSFER_SERVICE_URL, json=payload)
+                headers = {}
+                if getattr(p, "authToken", None):
+                    headers["Authorization"] = p.authToken
 
-                if resp.status_code in (200, 201):
+                resp = await client.post(settings.TRANSFER_SERVICE_URL, json=payload, headers=headers)
+
+                if 200 <= resp.status_code < 300:
                     deactivate = isinstance(p.schedule, OnceSchedule)
                     await self.repo.mark_once_payment_executed(p.id, now, deactivate)
                 else:
@@ -116,8 +120,9 @@ class ScheduledPaymentService:
 
         data = resp.json()
         sub = (data.get("subscription") or "").lower()
+        logger.debug("Subscripción solicitada: ", data, sub)
 
-        if sub not in ["basico", "estudiante", "pro"]:
+        if sub not in ["basico", "premium", "pro"]:
             sub = "basico"
 
         return sub
