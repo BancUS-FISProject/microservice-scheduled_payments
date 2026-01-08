@@ -1,0 +1,1302 @@
+{
+  "components": {
+    "schemas": {
+      "Amount": {
+        "properties": {
+          "currency": {
+            "description": "Divisa del pago (por ejemplo: 'EUR').",
+            "title": "Currency",
+            "type": "string"
+          },
+          "value": {
+            "description": "Importe del pago. Debe ser mayor que 0.",
+            "exclusiveMinimum": 0,
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "value",
+          "currency"
+        ],
+        "title": "Amount",
+        "type": "object"
+      },
+      "Beneficiary": {
+        "properties": {
+          "iban": {
+            "description": "IBAN del beneficiario que recibirá la transferencia.",
+            "title": "Iban",
+            "type": "string"
+          },
+          "name": {
+            "description": "Nombre del beneficiario del pago.",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "iban"
+        ],
+        "title": "Beneficiary",
+        "type": "object"
+      },
+      "MonthlySchedule": {
+        "properties": {
+          "dayOfMonth": {
+            "description": "Día del mes en el que se ejecuta el pago (1-31).",
+            "maximum": 31,
+            "minimum": 1,
+            "title": "Dayofmonth",
+            "type": "integer"
+          },
+          "endDate": {
+            "description": "Fecha de fin del periodo de validez del pago.",
+            "format": "date-time",
+            "title": "Enddate",
+            "type": "string"
+          },
+          "frequency": {
+            "const": "MONTHLY",
+            "default": "MONTHLY",
+            "description": "Frecuencia mensual.",
+            "title": "Frequency",
+            "type": "string"
+          },
+          "startDate": {
+            "description": "Fecha de inicio del periodo de validez del pago.",
+            "format": "date-time",
+            "title": "Startdate",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dayOfMonth",
+          "startDate",
+          "endDate"
+        ],
+        "title": "MonthlySchedule",
+        "type": "object"
+      },
+      "OnceSchedule": {
+        "properties": {
+          "executionDate": {
+            "description": "Fecha/hora exacta en la que se ejecuta el pago.",
+            "format": "date-time",
+            "title": "Executiondate",
+            "type": "string"
+          },
+          "frequency": {
+            "const": "ONCE",
+            "default": "ONCE",
+            "description": "Pago de una única ejecución.",
+            "title": "Frequency",
+            "type": "string"
+          }
+        },
+        "required": [
+          "executionDate"
+        ],
+        "title": "OnceSchedule",
+        "type": "object"
+      },
+      "ScheduledPaymentUpcomingView": {
+        "properties": {
+          "accountId": {
+            "description": "Identificador/IBAN de la cuenta emisora.",
+            "title": "Accountid",
+            "type": "string"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/Amount",
+            "description": "Importe del pago."
+          },
+          "authToken": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Token de autorización capturado al crear el pago y reutilizado para ejecutar transferencias.",
+            "title": "Authtoken"
+          },
+          "beneficiary": {
+            "$ref": "#/components/schemas/Beneficiary",
+            "description": "Datos del beneficiario."
+          },
+          "description": {
+            "description": "Descripción libre del pago (ej. 'Alquiler', 'Netflix').",
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "description": "Identificador único del pago programado (UUID).",
+            "title": "Id",
+            "type": "string"
+          },
+          "isActive": {
+            "default": true,
+            "description": "Indica si el pago está activo y puede ejecutarse.",
+            "title": "Isactive",
+            "type": "boolean"
+          },
+          "lastExecutionAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Marca temporal de la última ejecución (si se ha ejecutado alguna vez).",
+            "title": "Lastexecutionat"
+          },
+          "nextExecutionAt": {
+            "description": "Próxima fecha/hora calculada de ejecución.",
+            "format": "date-time",
+            "title": "Nextexecutionat",
+            "type": "string"
+          },
+          "schedule": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MonthlySchedule"
+              },
+              {
+                "$ref": "#/components/schemas/WeeklySchedule"
+              },
+              {
+                "$ref": "#/components/schemas/OnceSchedule"
+              }
+            ],
+            "description": "Planificación del pago (ONCE/WEEKLY/MONTHLY).",
+            "title": "Schedule"
+          }
+        },
+        "required": [
+          "accountId",
+          "description",
+          "beneficiary",
+          "amount",
+          "schedule",
+          "nextExecutionAt"
+        ],
+        "title": "ScheduledPaymentUpcomingView",
+        "type": "object"
+      },
+      "ScheduledPaymentView": {
+        "description": "Vista completa de un pago programado.",
+        "properties": {
+          "accountId": {
+            "description": "Identificador/IBAN de la cuenta emisora.",
+            "title": "Accountid",
+            "type": "string"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/Amount",
+            "description": "Importe del pago."
+          },
+          "authToken": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Token de autorización capturado al crear el pago y reutilizado para ejecutar transferencias.",
+            "title": "Authtoken"
+          },
+          "beneficiary": {
+            "$ref": "#/components/schemas/Beneficiary",
+            "description": "Datos del beneficiario."
+          },
+          "description": {
+            "description": "Descripción libre del pago (ej. 'Alquiler', 'Netflix').",
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "description": "Identificador único del pago programado (UUID).",
+            "title": "Id",
+            "type": "string"
+          },
+          "isActive": {
+            "default": true,
+            "description": "Indica si el pago está activo y puede ejecutarse.",
+            "title": "Isactive",
+            "type": "boolean"
+          },
+          "lastExecutionAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Marca temporal de la última ejecución (si se ha ejecutado alguna vez).",
+            "title": "Lastexecutionat"
+          },
+          "schedule": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MonthlySchedule"
+              },
+              {
+                "$ref": "#/components/schemas/WeeklySchedule"
+              },
+              {
+                "$ref": "#/components/schemas/OnceSchedule"
+              }
+            ],
+            "description": "Planificación del pago (ONCE/WEEKLY/MONTHLY).",
+            "title": "Schedule"
+          }
+        },
+        "required": [
+          "accountId",
+          "description",
+          "beneficiary",
+          "amount",
+          "schedule"
+        ],
+        "title": "ScheduledPaymentView",
+        "type": "object"
+      },
+      "WeeklySchedule": {
+        "properties": {
+          "daysOfWeek": {
+            "description": "Días de la semana en los que se ejecuta el pago (por ejemplo: ['MONDAY','FRIDAY']).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Daysofweek",
+            "type": "array"
+          },
+          "endDate": {
+            "description": "Fecha de fin del periodo de validez del pago.",
+            "format": "date-time",
+            "title": "Enddate",
+            "type": "string"
+          },
+          "frequency": {
+            "const": "WEEKLY",
+            "default": "WEEKLY",
+            "description": "Frecuencia semanal.",
+            "title": "Frequency",
+            "type": "string"
+          },
+          "startDate": {
+            "description": "Fecha de inicio del periodo de validez del pago.",
+            "format": "date-time",
+            "title": "Startdate",
+            "type": "string"
+          }
+        },
+        "required": [
+          "daysOfWeek",
+          "startDate",
+          "endDate"
+        ],
+        "title": "WeeklySchedule",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Scheduled Payments Service",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/v1/scheduled-payments/": {
+      "post": {
+        "description": "\nReglas principales:\n- Requiere cabecera Authorization (se guarda en el pago para poder ejecutar transferencias después).\n- Valida que la cuenta exista consultando el Accounts Service.\n- Aplica el límite de pagos activos en función del plan de suscripción (basic/student/pro).\n- Si el `id` ya existe, devuelve 409.\n\nRespuestas típicas:\n- 201: Pago programado creado correctamente.\n- 401: No se envió token de autorización.\n- 404: La cuenta no existe.\n- 403: Límite de pagos alcanzado según suscripción.\n- 409: Ya existe un pago con ese id.\n- 503: Error del servicio (dependencias o DB).",
+        "operationId": "post_create_scheduled_payments",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "Payload de creación de un pago programado.",
+                "properties": {
+                  "accountId": {
+                    "description": "Identificador/IBAN de la cuenta emisora.",
+                    "title": "Accountid",
+                    "type": "string"
+                  },
+                  "amount": {
+                    "$ref": "#/components/schemas/Amount",
+                    "description": "Importe del pago."
+                  },
+                  "authToken": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Token de autorización capturado al crear el pago y reutilizado para ejecutar transferencias.",
+                    "title": "Authtoken"
+                  },
+                  "beneficiary": {
+                    "$ref": "#/components/schemas/Beneficiary",
+                    "description": "Datos del beneficiario."
+                  },
+                  "description": {
+                    "description": "Descripción libre del pago (ej. 'Alquiler', 'Netflix').",
+                    "title": "Description",
+                    "type": "string"
+                  },
+                  "id": {
+                    "description": "Identificador único del pago programado (UUID).",
+                    "title": "Id",
+                    "type": "string"
+                  },
+                  "isActive": {
+                    "default": true,
+                    "description": "Indica si el pago está activo y puede ejecutarse.",
+                    "title": "Isactive",
+                    "type": "boolean"
+                  },
+                  "lastExecutionAt": {
+                    "anyOf": [
+                      {
+                        "format": "date-time",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Marca temporal de la última ejecución (si se ha ejecutado alguna vez).",
+                    "title": "Lastexecutionat"
+                  },
+                  "schedule": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/components/schemas/MonthlySchedule"
+                      },
+                      {
+                        "$ref": "#/components/schemas/WeeklySchedule"
+                      },
+                      {
+                        "$ref": "#/components/schemas/OnceSchedule"
+                      }
+                    ],
+                    "description": "Planificación del pago (ONCE/WEEKLY/MONTHLY).",
+                    "title": "Schedule"
+                  }
+                },
+                "required": [
+                  "accountId",
+                  "description",
+                  "beneficiary",
+                  "amount",
+                  "schedule"
+                ],
+                "title": "ScheduledPaymentCreate",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Vista completa de un pago programado.",
+                  "properties": {
+                    "accountId": {
+                      "description": "Identificador/IBAN de la cuenta emisora.",
+                      "title": "Accountid",
+                      "type": "string"
+                    },
+                    "amount": {
+                      "$ref": "#/components/schemas/Amount",
+                      "description": "Importe del pago."
+                    },
+                    "authToken": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null,
+                      "description": "Token de autorización capturado al crear el pago y reutilizado para ejecutar transferencias.",
+                      "title": "Authtoken"
+                    },
+                    "beneficiary": {
+                      "$ref": "#/components/schemas/Beneficiary",
+                      "description": "Datos del beneficiario."
+                    },
+                    "description": {
+                      "description": "Descripción libre del pago (ej. 'Alquiler', 'Netflix').",
+                      "title": "Description",
+                      "type": "string"
+                    },
+                    "id": {
+                      "description": "Identificador único del pago programado (UUID).",
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "isActive": {
+                      "default": true,
+                      "description": "Indica si el pago está activo y puede ejecutarse.",
+                      "title": "Isactive",
+                      "type": "boolean"
+                    },
+                    "lastExecutionAt": {
+                      "anyOf": [
+                        {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null,
+                      "description": "Marca temporal de la última ejecución (si se ha ejecutado alguna vez).",
+                      "title": "Lastexecutionat"
+                    },
+                    "schedule": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/MonthlySchedule"
+                        },
+                        {
+                          "$ref": "#/components/schemas/WeeklySchedule"
+                        },
+                        {
+                          "$ref": "#/components/schemas/OnceSchedule"
+                        }
+                      ],
+                      "description": "Planificación del pago (ONCE/WEEKLY/MONTHLY).",
+                      "title": "Schedule"
+                    }
+                  },
+                  "required": [
+                    "accountId",
+                    "description",
+                    "beneficiary",
+                    "amount",
+                    "schedule"
+                  ],
+                  "title": "ScheduledPaymentView",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Vista completa de un pago programado."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null,
+                      "description": "Detalle adicional del error si aplica.",
+                      "title": "Detail"
+                    },
+                    "error": {
+                      "description": "Mensaje de error legible.",
+                      "title": "Error",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "title": "ErrorResponse",
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null,
+                      "description": "Detalle adicional del error si aplica.",
+                      "title": "Detail"
+                    },
+                    "error": {
+                      "description": "Mensaje de error legible.",
+                      "title": "Error",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "title": "ErrorResponse",
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null,
+                      "description": "Detalle adicional del error si aplica.",
+                      "title": "Detail"
+                    },
+                    "error": {
+                      "description": "Mensaje de error legible.",
+                      "title": "Error",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "title": "ErrorResponse",
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null,
+                      "description": "Detalle adicional del error si aplica.",
+                      "title": "Detail"
+                    },
+                    "error": {
+                      "description": "Mensaje de error legible.",
+                      "title": "Error",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "title": "ErrorResponse",
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null,
+                      "description": "Detalle adicional del error si aplica.",
+                      "title": "Detail"
+                    },
+                    "error": {
+                      "description": "Mensaje de error legible.",
+                      "title": "Error",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "title": "ErrorResponse",
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Crea un pago programado.",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/v1/scheduled-payments/accounts/{account_id}": {
+      "get": {
+        "description": "\n- 200: Devuelve una lista (posiblemente vacía).",
+        "operationId": "get_get_scheduled_payments_by_account",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "account_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScheduledPaymentView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Lista los pagos programados asociados a una cuenta.",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/v1/scheduled-payments/accounts/{account_id}/upcoming": {
+      "get": {
+        "description": "\nQuery params:\n- limit (int, opcional): número máximo de resultados (1..100). Por defecto 10.\n\nLógica:\n- Calcula la próxima ejecución de cada pago activo.\n- Ordena por fecha más próxima.",
+        "operationId": "get_get_upcoming_payments",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "account_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScheduledPaymentUpcomingView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Built-in mutable sequence.\n\nIf no argument is given, the constructor creates a new empty list.\nThe argument must be an iterable if specified."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null,
+                      "description": "Detalle adicional del error si aplica.",
+                      "title": "Detail"
+                    },
+                    "error": {
+                      "description": "Mensaje de error legible.",
+                      "title": "Error",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "title": "ErrorResponse",
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Devuelve los próximos pagos estimados para una cuenta.",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/v1/scheduled-payments/health": {
+      "get": {
+        "description": "\nPensado para:\n- readiness/liveness en docker/k8s\n- validación rápida en CI\n\n- 200: El servicio está operativo.",
+        "operationId": "get_health_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "service": {
+                      "description": "Nombre del servicio.",
+                      "title": "Service",
+                      "type": "string"
+                    },
+                    "status": {
+                      "description": "Estado del servicio (ok/error).",
+                      "title": "Status",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "service"
+                  ],
+                  "title": "HealthResponse",
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Healthcheck del servicio.",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/v1/scheduled-payments/{scheduled_payment_id}": {
+      "delete": {
+        "description": "\n- 200: Eliminado correctamente (sin contenido).\n- 404: No existe el pago.",
+        "operationId": "delete_delete_scheduled_payment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scheduled_payment_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "description": "ID del pago programado eliminado.",
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "status": {
+                      "const": "deleted",
+                      "default": "deleted",
+                      "description": "Confirmación de borrado.",
+                      "title": "Status",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "DeleteResponse",
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null,
+                      "description": "Detalle adicional del error si aplica.",
+                      "title": "Detail"
+                    },
+                    "error": {
+                      "description": "Mensaje de error legible.",
+                      "title": "Error",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "title": "ErrorResponse",
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Elimina un pago programado.",
+        "tags": [
+          "v1"
+        ]
+      },
+      "get": {
+        "description": "\n- 200: Devuelve el pago programado.\n- 404: No existe un pago con ese id.",
+        "operationId": "get_get_scheduled_payment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scheduled_payment_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Vista completa de un pago programado.",
+                  "properties": {
+                    "accountId": {
+                      "description": "Identificador/IBAN de la cuenta emisora.",
+                      "title": "Accountid",
+                      "type": "string"
+                    },
+                    "amount": {
+                      "$ref": "#/components/schemas/Amount",
+                      "description": "Importe del pago."
+                    },
+                    "authToken": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null,
+                      "description": "Token de autorización capturado al crear el pago y reutilizado para ejecutar transferencias.",
+                      "title": "Authtoken"
+                    },
+                    "beneficiary": {
+                      "$ref": "#/components/schemas/Beneficiary",
+                      "description": "Datos del beneficiario."
+                    },
+                    "description": {
+                      "description": "Descripción libre del pago (ej. 'Alquiler', 'Netflix').",
+                      "title": "Description",
+                      "type": "string"
+                    },
+                    "id": {
+                      "description": "Identificador único del pago programado (UUID).",
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "isActive": {
+                      "default": true,
+                      "description": "Indica si el pago está activo y puede ejecutarse.",
+                      "title": "Isactive",
+                      "type": "boolean"
+                    },
+                    "lastExecutionAt": {
+                      "anyOf": [
+                        {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null,
+                      "description": "Marca temporal de la última ejecución (si se ha ejecutado alguna vez).",
+                      "title": "Lastexecutionat"
+                    },
+                    "schedule": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/MonthlySchedule"
+                        },
+                        {
+                          "$ref": "#/components/schemas/WeeklySchedule"
+                        },
+                        {
+                          "$ref": "#/components/schemas/OnceSchedule"
+                        }
+                      ],
+                      "description": "Planificación del pago (ONCE/WEEKLY/MONTHLY).",
+                      "title": "Schedule"
+                    }
+                  },
+                  "required": [
+                    "accountId",
+                    "description",
+                    "beneficiary",
+                    "amount",
+                    "schedule"
+                  ],
+                  "title": "ScheduledPaymentView",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Vista completa de un pago programado."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null,
+                      "description": "Detalle adicional del error si aplica.",
+                      "title": "Detail"
+                    },
+                    "error": {
+                      "description": "Mensaje de error legible.",
+                      "title": "Error",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "title": "ErrorResponse",
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Obtiene un pago programado por su id.",
+        "tags": [
+          "v1"
+        ]
+      },
+      "patch": {
+        "description": "\n- Admite cambios parciales (PATCH).\n- 200: Devuelve el recurso actualizado.\n- 404: No existe el pago.",
+        "operationId": "patch_update_scheduled_payment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scheduled_payment_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "description": "Payload parcial para modificar un pago existente.",
+                "properties": {
+                  "accountId": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Nueva cuenta emisora (si aplica).",
+                    "title": "Accountid"
+                  },
+                  "amount": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/components/schemas/Amount"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Nuevo importe."
+                  },
+                  "beneficiary": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/components/schemas/Beneficiary"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Nuevo beneficiario."
+                  },
+                  "description": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Nueva descripción del pago.",
+                    "title": "Description"
+                  },
+                  "schedule": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/components/schemas/MonthlySchedule"
+                      },
+                      {
+                        "$ref": "#/components/schemas/WeeklySchedule"
+                      },
+                      {
+                        "$ref": "#/components/schemas/OnceSchedule"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Nueva planificación.",
+                    "title": "Schedule"
+                  }
+                },
+                "title": "ScheduledPaymentUpdate",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Vista completa de un pago programado.",
+                  "properties": {
+                    "accountId": {
+                      "description": "Identificador/IBAN de la cuenta emisora.",
+                      "title": "Accountid",
+                      "type": "string"
+                    },
+                    "amount": {
+                      "$ref": "#/components/schemas/Amount",
+                      "description": "Importe del pago."
+                    },
+                    "authToken": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null,
+                      "description": "Token de autorización capturado al crear el pago y reutilizado para ejecutar transferencias.",
+                      "title": "Authtoken"
+                    },
+                    "beneficiary": {
+                      "$ref": "#/components/schemas/Beneficiary",
+                      "description": "Datos del beneficiario."
+                    },
+                    "description": {
+                      "description": "Descripción libre del pago (ej. 'Alquiler', 'Netflix').",
+                      "title": "Description",
+                      "type": "string"
+                    },
+                    "id": {
+                      "description": "Identificador único del pago programado (UUID).",
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "isActive": {
+                      "default": true,
+                      "description": "Indica si el pago está activo y puede ejecutarse.",
+                      "title": "Isactive",
+                      "type": "boolean"
+                    },
+                    "lastExecutionAt": {
+                      "anyOf": [
+                        {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null,
+                      "description": "Marca temporal de la última ejecución (si se ha ejecutado alguna vez).",
+                      "title": "Lastexecutionat"
+                    },
+                    "schedule": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/MonthlySchedule"
+                        },
+                        {
+                          "$ref": "#/components/schemas/WeeklySchedule"
+                        },
+                        {
+                          "$ref": "#/components/schemas/OnceSchedule"
+                        }
+                      ],
+                      "description": "Planificación del pago (ONCE/WEEKLY/MONTHLY).",
+                      "title": "Schedule"
+                    }
+                  },
+                  "required": [
+                    "accountId",
+                    "description",
+                    "beneficiary",
+                    "amount",
+                    "schedule"
+                  ],
+                  "title": "ScheduledPaymentView",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Vista completa de un pago programado."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "detail": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null,
+                      "description": "Detalle adicional del error si aplica.",
+                      "title": "Detail"
+                    },
+                    "error": {
+                      "description": "Mensaje de error legible.",
+                      "title": "Error",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "title": "ErrorResponse",
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Actualiza parcialmente un pago programado.",
+        "tags": [
+          "v1"
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "description": "API version 1",
+      "name": "v1"
+    }
+  ]
+}
