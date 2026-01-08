@@ -67,6 +67,19 @@ def create_app():
     ]
     schema.openapi_path = "/api/openapi.json"
     schema.swagger_ui_path = "/api/docs"
+    app.config["QUART_SCHEMA_TITLE"] = "Scheduled Payments Service"
+    app.config["QUART_SCHEMA_VERSION"] = "1.0.0"
+    app.config["QUART_SCHEMA_DESCRIPTION"] = (
+        "Microservicio responsable de gestionar pagos programados.\n\n"
+        "Permite:\n"
+        "- Crear pagos programados (ONCE/WEEKLY/MONTHLY)\n"
+        "- Consultar pagos por id o por cuenta\n"
+        "- Consultar próximos pagos (upcoming)\n"
+        "- Actualizar y eliminar pagos\n\n"
+        "Integra:\n"
+        "- Accounts Service: para validar que la cuenta existe y obtener el plan de suscripción\n"
+        "- Transfers Service: para ejecutar los pagos cuando llegan a su fecha/hora\n"
+    )
     schema.init_app(app)
     # Open API Specification
     
