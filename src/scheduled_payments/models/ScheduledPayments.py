@@ -33,6 +33,7 @@ class ScheduledPaymentBase(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     isActive: bool = True
     lastExecutionAt: Optional[datetime] = None
+    authToken: Optional[str] = None
     accountId: str
     description: str
     beneficiary: Beneficiary

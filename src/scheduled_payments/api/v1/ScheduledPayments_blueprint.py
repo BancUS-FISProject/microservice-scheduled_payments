@@ -18,6 +18,14 @@ bp = Blueprint("scheduled_payments_v1", __name__, url_prefix="/v1/scheduled-paym
 @validate_response(ScheduledPaymentView, 201)
 @tag(["v1"])
 async def create_scheduled_payments(data: ScheduledPaymentCreate):
+
+    token = request.headers.get("Authorization")
+    logger.debug(f"Token recibido: {token}")
+    if not token:
+        logger.exception("Token no recibido en creación de pago programado")
+        return {"error": "Falta token en cabecera (Authorization o X-Auth-Token)"}, 401
+    
+    data = data.model_copy(update={"authToken": token})
     
     service = ScheduledPaymentService()
 
@@ -29,6 +37,7 @@ async def create_scheduled_payments(data: ScheduledPaymentCreate):
         return {"error": f"Límite de pagos programados alcanzado para el plan {e.subscription} (máximo {e.limit})."}, 403
     except Exception as e:
         logger.exception("Error creando pago programado")
+        logger.exception(e)
         return {"error": "No se pudo crear el pago programado"}, 503
 
     if not new_scheduled_payment:
